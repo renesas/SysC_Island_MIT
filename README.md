@@ -100,6 +100,7 @@ cd ~ && rm -rf /tmp/virglrenderer
 $> git clone https://github.com/renesas/SysC_Island_MIT.git
 
 * Clone the QEMU repository
+
 ```bash
 $> cd <repo-directory>
 $> git clone https://github.com/qemu/qemu.git
