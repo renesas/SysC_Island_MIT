@@ -1,0 +1,133 @@
+/dts-v1/;
+
+/ {
+	interrupt-parent = <&gic>;
+	dma-coherent;
+	model = "linux,dummy-virt";
+	#size-cells = <0x02>;
+	#address-cells = <0x02>;
+	compatible = "linux,dummy-virt";
+
+	pl061@169030000 {
+		clock-names = "apb_pclk";
+		clocks = <&apb_pclk>;
+		interrupts = <0x00 0x07 0x04>;
+		gpio-controller;
+		#gpio-cells = <0x02>;
+		compatible = "arm,pl061\0arm,primecell";
+		reg = <0x01 0x69030000 0x00 0x1000>;
+	};
+
+	pl031@169010000 {
+		clock-names = "apb_pclk";
+		clocks = <&apb_pclk>;
+		interrupts = <0x00 0x02 0x04>;
+		reg = <0x01 0x69010000 0x00 0x1000>;
+		compatible = "arm,pl031\0arm,primecell";
+	};
+
+	pl011@3C000000 {
+		clock-names = "uartclk\0apb_pclk";
+		clocks = <&apb_pclk &apb_pclk>;
+		interrupts = <0x00 0x01 0x04>;
+		reg = <0x0 0x3C000000 0x00 0x1000>;
+		compatible = "arm,pl011\0arm,primecell";
+	};
+
+	gic: intc@138000000 {
+		reg = <0x01 0x38000000 0x00 0x10000 0x01 0x38010000 0x00 0x10000>;
+		compatible = "arm,cortex-a15-gic";
+		ranges;
+		#size-cells = <0x02>;
+		#address-cells = <0x02>;
+		interrupt-controller;
+		#interrupt-cells = <0x03>;
+	};
+
+	cpus {
+		#size-cells = <0x00>;
+		#address-cells = <0x01>;
+
+		cpu-map {
+
+			socket0 {
+
+				cluster0 {
+
+					core0 {
+						cpu = <&cpu0>;
+					};
+
+					core1 {
+						cpu = <&cpu1>;
+					};
+
+					core2 {
+						cpu = <&cpu2>;
+					};
+
+					core3 {
+						cpu = <&cpu3>;
+					};
+				};
+			};
+		};
+
+		cpu0: cpu@0 {
+			reg = <0x00>;
+			enable-method = "psci";
+			compatible = "arm,cortex-a53";
+			device_type = "cpu";
+		};
+
+		cpu1: cpu@1 {
+			reg = <0x01>;
+			enable-method = "psci";
+			compatible = "arm,cortex-a53";
+			device_type = "cpu";
+		};
+
+		cpu2: cpu@2 {
+			reg = <0x02>;
+			enable-method = "psci";
+			compatible = "arm,cortex-a53";
+			device_type = "cpu";
+		};
+
+		cpu3: cpu@3 {
+			reg = <0x03>;
+			enable-method = "psci";
+			compatible = "arm,cortex-a53";
+			device_type = "cpu";
+		};
+	};
+
+	timer {
+		interrupts = <0x01 0x0d 0xf04 0x01 0x0e 0xf04 0x01 0x0b 0xf04 0x01 0x0a 0xf04>;
+		always-on;
+		compatible = "arm,armv8-timer\0arm,armv7-timer";
+	};
+
+	apb_pclk: apb-pclk {
+		clock-output-names = "clk24mhz";
+		clock-frequency = <0x16e3600>;
+		#clock-cells = <0x00>;
+		compatible = "fixed-clock";
+	};
+
+	virtio_mmio@16a000000 {
+		dma-coherent;
+		interrupts = <0x00 0x10 0x01>;
+		reg = <0x1 0x6a000000 0x00 0x200>;
+		compatible = "virtio,mmio";
+	};
+
+	aliases {
+		serial0 = "/pl011@3C000000";
+	};
+
+	chosen {
+        bootargs = "earlycon=pl011,0x3C000000 console=ttyAMA0 root=/dev/vda uio_pdrv_genirq.of_id=generic-uio rootwait debug cma=560M";
+		stdout-path = "/uart@3C000000";
+	};
+};

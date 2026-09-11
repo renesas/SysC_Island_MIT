@@ -1,0 +1,150 @@
+/dts-v1/;
+
+/ {
+	interrupt-parent = <&gic>;
+	model = "linux,dummy-virt";
+	#size-cells = <0x02>;
+	#address-cells = <0x02>;
+	compatible = "linux,dummy-virt";
+
+	cpus {
+		#size-cells = <0x00>;
+		#address-cells = <0x01>;
+
+		cpu0: cpu@0 {
+			reg = <0x00>;
+			enable-method = "psci";
+			compatible = "cortex-a53-arm-cpu";
+			device_type = "cpu";
+			has_el2 = <0>;
+			has_el3 = <0>;
+			#interrupt-cells = <1>;
+		};
+
+		cpu1: cpu@1 {
+			reg = <0x01>;
+			enable-method = "psci";
+			compatible = "cortex-a53-arm-cpu";
+			device_type = "cpu";
+			has_el2 = <0>;
+			has_el3 = <0>;
+			#interrupt-cells = <1>;
+		};
+
+		cpu2: cpu@2 {
+			reg = <0x02>;
+			enable-method = "psci";
+			compatible = "cortex-a53-arm-cpu";
+			device_type = "cpu";
+			has_el2 = <0>;
+			has_el3 = <0>;
+			#interrupt-cells = <1>;
+		};
+
+		cpu3: cpu@3 {
+			reg = <0x03>;
+			enable-method = "psci";
+			compatible = "cortex-a53-arm-cpu";
+			device_type = "cpu";
+			has_el2 = <0>;
+			has_el3 = <0>;
+			#interrupt-cells = <1>;
+		};
+	};
+
+	qemu_sysmem: qemu_sysmem@0 {
+		#address-cells = <2>;
+		#size-cells = <2>;
+		compatible = "qemu:system-memory";
+	};
+
+	ram: memory@200000000 {
+		reg = <0x02 0x00000000 0x00 0x80000000>;
+		compatible = "qemu-memory-region";
+		qemu,ram = <1>;
+		qemu,host-id = "mem0";
+		container = <&qemu_sysmem>;
+	};
+
+	shared_mem: shared_mem@280000000 {
+		reg = <0x02 0x80000000 0x00 0x80000>;
+		compatible = "qemu-memory-region";
+		qemu,ram = <1>;
+		qemu,host-id = "mem1";
+		container = <&qemu_sysmem>;
+	};
+
+	pl061@169030000 {
+		interrupts = <0x00 0x07 0x04>;
+		pullups = <0>;
+		pulldowns = <0xff>;
+		gpio-controller;
+		#gpio-cells = <0x02>;
+		compatible = "pl061";
+		reg = <0x01 0x69030000 0x00 0x1000>;
+	};
+
+	pl031@169010000 {
+		interrupts = <0x00 0x02 0x04>;
+		reg = <0x01 0x69010000 0x00 0x1000>;
+		compatible = "pl031";
+	};
+
+	gic: interrupt-controller@138000000 {
+		#interrupt-cells = <3>;
+
+		compatible = "arm_gic";
+		revision = <2>;
+		has-virtualization-extensions = <0>;
+		has-security-extensions = <0>;
+
+		reg = < 0x01 0x38000000 0x0 0x10000
+			0x01 0x38010000 0x0 0x10000>;
+		interrupt-controller ;
+
+		num-cpu = <4>;
+		num-irq = <288>;
+		gpio-controller;
+		#gpio-cells = <1>;
+	};
+
+	timer {
+		interrupt-parent = <&gic>;
+		interrupts = <0x01 0x0d 0xf04 0x01 0x0e 0xf04 0x01 0x0b 0xf04 0x01 0x0a 0xf04>;
+		compatible = "arm,armv8-timer";
+	};
+  
+	virtio_mmio@16a000000 {
+		interrupts = <0x00 0x10 0x01>;
+		reg = <0x1 0x6a000000 0x00 0x200>;
+		compatible = "virtio-mmio";
+	};
+
+	amba_pl {
+		#address-cells = <0x01>;
+		#size-cells = <0x01>;
+
+		cosim: cosim@0 {
+			compatible = "remote-port";
+			sync = <0x01>;
+			chrdev-id = "pl-rp";
+		};
+
+		rp_qemu2rfs_m_axi_0@00000000 {
+			compatible = "remote-port-memory-master";
+			rp-adaptor0 = <&cosim>;
+			rp-chan0 = <0x00>;
+			reg = <0x00000000 0xffffffff>;
+		};
+
+		rp_wires_in@0 {
+			compatible = "remote-port-gpio";
+			rp-adaptor0 = <&cosim>;
+			rp-chan0 = <0x02>;
+			num-gpios = <0x01>;
+
+			interrupts = <0x00 0x01 0x04>;
+		};
+	};
+
+};

@@ -1,0 +1,69 @@
+name: asan
+
+on:
+  push:
+    branches:
+      - 'main'
+      - 'dev**'
+  pull_request:
+    branches:
+      - 'main'
+
+env:
+  TARGET_ARCH: linux64
+  ASAN_OPTIONS: verbosity=1
+  TSAN_OPTIONS: verbosity=1
+  UBSAN_OPTIONS: print_stacktrace=1
+
+jobs:
+  sanitize:
+    runs-on: ubuntu-22.04
+    name: ${{matrix.sanitizer}}
+
+    strategy:
+      fail-fast: false
+      matrix:
+        systemc: [2.3.3]
+        sanitizer: [ASAN, TSAN, UBSAN]
+
+    env:
+      SYSTEMC_HOME: ${{github.workspace}}/systemc/${{matrix.systemc}}
+
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        submodules: 'recursive'
+
+    - name: Setup Dependencies
+      run: |
+        sudo apt-get update -y -qq
+        sudo apt-get install libelf-dev libsdl2-dev liblua5.3-dev libvncserver-dev libslirp-dev ninja-build
+
+    - name: Fix kernel mmap rnd bits
+      # Asan in llvm 14 provided in ubuntu 22.04 is incompatible with
+      # high-entropy ASLR in much newer kernels that GitHub runners are
+      # using leading to random crashes: https://reviews.llvm.org/D148280
+      run: sudo sysctl vm.mmap_rnd_bits=28
+
+    - name: Cache SystemC
+      id: cache-systemc
+      uses: actions/cache@v4
+      with:
+        path: ${{github.workspace}}/systemc
+        key: cache-systemc-${{matrix.systemc}}-${{runner.arch}}-sanitizer
+
+    - name: Download SystemC
+      if: steps.cache-systemc.outputs.cache-hit != 'true'
+      run: ./utils/setup-systemc -p ${{github.workspace}} -v ${{matrix.systemc}}
+
+    - name: Configure
+      run: cmake -G Ninja -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{matrix.sanitizer}} -DVCML_BUILD_TESTS=ON
+
+    - name: Build
+      run: cmake --build ${{github.workspace}}/build --config ${{matrix.sanitizer}} -j $(nproc)
+
+    - name: Test
+      working-directory: ${{github.workspace}}/build
+      run: ctest -C ${{matrix.sanitizer}} --verbose
+
