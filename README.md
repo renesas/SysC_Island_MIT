@@ -95,13 +95,12 @@ cd ~ && rm -rf /tmp/virglrenderer
 
 
 ## 3. Prepare SysC_Island_MIT environment
-#### Clone git repository 
-
+* Clone git repository 
 ```bash
 $> git clone https://github.com/renesas/SysC_Island_MIT.git
+```
 
-#### Clone the QEMU repository
-
+* Clone the QEMU repository
 ```bash
 $> cd <repo-directory>
 $> git clone https://github.com/qemu/qemu.git
